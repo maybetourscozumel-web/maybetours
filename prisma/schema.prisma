@@ -1,0 +1,101 @@
+// May-Be Tours Cozumel — data model
+// Dev uses SQLite (zero-config). SQLite has no native enum type, so enum-like
+// fields below (priceType, category, status, paymentStatus, source, role) are
+// plain strings whose allowed values are enforced in lib/validation.ts.
+//
+// For production, change `provider` to "postgresql" and point DATABASE_URL at
+// Neon/Supabase/Vercel Postgres — everything else here is Postgres-compatible
+// as-is; you can optionally convert those string fields back to real Prisma
+// `enum`s at that point. See README for the full migration steps.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Tour {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  shortDescription String
+  description      String
+  durationMinutes  Int
+  maxGroupSize     Int // max people allowed on a single booking/party
+  dailyCapacity    Int // total inventory available per date, summed across all bookings
+  priceMXN         Int
+  priceType        String   @default("PER_PERSON") // PER_PERSON | FLAT_PER_BOAT
+  isPrivate        Boolean  @default(false)
+  category         String   @default("SNORKELING") // SNORKELING | DIVING | WATERSPORT | PRIVATE
+  included         String // JSON-encoded string[]
+  excluded         String // JSON-encoded string[]
+  highlights       String   @default("[]") // JSON-encoded string[]
+  meetingPoint     String
+  heroImage        String?
+  active           Boolean  @default(true)
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  bookings   Booking[]
+  dateBlocks DateBlock[]
+}
+
+model Booking {
+  id              String    @id @default(cuid())
+  tourId          String
+  tour            Tour      @relation(fields: [tourId], references: [id])
+  date            DateTime
+  partySize       Int
+  customerName    String
+  email           String
+  phone           String
+  totalPriceMXN   Int
+  status          String    @default("PENDING_PAYMENT") // PENDING_PAYMENT | CONFIRMED | CANCELLED | COMPLETED | NO_SHOW
+  paymentStatus   String    @default("UNPAID") // UNPAID | PAID_ONLINE | PAID_MANUAL | REFUNDED
+  stripeSessionId String?   @unique
+  source          String    @default("ONLINE") // ONLINE | MANUAL
+  notes           String?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([tourId, date])
+  @@index([status])
+}
+
+model Customer {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String
+  phone     String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("STAFF") // OWNER | STAFF
+  createdAt    DateTime @default(now())
+}
+
+model DateBlock {
+  id     String   @id @default(cuid())
+  tourId String?
+  tour   Tour?    @relation(fields: [tourId], references: [id])
+  date   DateTime
+  reason String?
+
+  @@index([date])
+}
