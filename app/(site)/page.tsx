@@ -15,6 +15,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { parseTour } from "@/lib/tour-helpers";
 import { cn } from "@/lib/utils";
+import { BUSINESS, siteUrl } from "@/lib/business";
 import TourCard from "@/components/site/TourCard";
 import TourQuiz from "@/components/site/TourQuiz";
 import MarineLifeGuide from "@/components/site/MarineLifeGuide";
@@ -107,37 +108,96 @@ export default async function HomePage() {
   const parsedTours = tours.map(parseTour);
   const featured = parsedTours.slice(0, 6);
 
+  const url = siteUrl();
   const businessSchema = {
     "@context": "https://schema.org",
     "@type": "TravelAgency",
-    name: "May-Be Tours Cozumel",
-    description:
-      "Snorkeling, diving and watersports tours in Cozumel, Mexico — Palancar Reef, El Cielo, private catamaran charters, jet ski and more.",
-    url: process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
-    image: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/brand/boat-hero.webp`,
-    telephone: "+52-987-304-3584",
+    name: BUSINESS.name,
+    description: BUSINESS.description,
+    url,
+    image: `${url}/brand/boat-hero.webp`,
+    telephone: BUSINESS.telephone,
+    email: BUSINESS.email,
     priceRange: "$$",
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: "Carr. Costera Sur Km 6.5, Zona Hotelera Sur, Marina Cozumel ASIPONA",
-      addressLocality: "Cozumel",
-      addressRegion: "Quintana Roo",
-      postalCode: "77675",
-      addressCountry: "MX",
+    address: { "@type": "PostalAddress", ...BUSINESS.address },
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ],
+      opens: "09:00",
+      closes: "17:00",
     },
+    areaServed: [
+      { "@type": "City", name: "Cozumel" },
+      { "@type": "AdministrativeArea", name: "Quintana Roo" },
+      { "@type": "Place", name: "Cozumel cruise ship port" },
+      { "@type": "Place", name: "Playa del Carmen" },
+    ],
     aggregateRating: {
       "@type": "AggregateRating",
-      ratingValue: "4.2",
-      reviewCount: "107",
+      ratingValue: BUSINESS.rating.value,
+      reviewCount: BUSINESS.rating.count,
       bestRating: "5",
     },
+    makesOffer: parsedTours.map((t) => ({
+      "@type": "Offer",
+      url: `${url}/tours/${t.slug}`,
+      name: t.name,
+      priceCurrency: "MXN",
+      price: t.priceMXN,
+    })),
+    ...(BUSINESS.sameAs.length > 0 ? { sameAs: BUSINESS.sameAs } : {}),
   };
+
+  const homeFaqs = [
+    {
+      question: "Can I book a Cozumel snorkeling tour if I'm arriving on a cruise ship?",
+      answer:
+        "Yes. We're a short taxi ride from the Cozumel cruise piers (Puerta Maya and the International Pier), and our tours are sized to fit comfortably inside a typical port day. Book online in advance so your spot is guaranteed before you even get off the ship.",
+    },
+    {
+      question: "How do I get to Cozumel from Playa del Carmen for a day trip?",
+      answer:
+        "Passenger ferries (Ultramar and Winjet) cross from Playa del Carmen to Cozumel in about 45 minutes, running frequently throughout the day. Reserve your tour with us online before you cross so it's already confirmed when you arrive — see our Playa del Carmen page for the full plan.",
+    },
+    {
+      question: "Do I need to book in advance, or can I just show up?",
+      answer:
+        "Booking online in advance guarantees your spot and locks in your price — popular dates and private charters do sell out, especially on big cruise ship days. Walk-ups are welcome if space allows, but we can't promise availability without a reservation.",
+    },
+    {
+      question: "Is this cheaper than booking through my hotel or cruise ship excursion desk?",
+      answer:
+        "Booking directly with us online means no middleman markup — the price you see is what you pay, with secure checkout and instant confirmation.",
+    },
+  ];
 
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(businessSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: homeFaqs.map((f) => ({
+              "@type": "Question",
+              name: f.question,
+              acceptedAnswer: { "@type": "Answer", text: f.answer },
+            })),
+          }),
+        }}
       />
       {/* Hero */}
       <section className="relative overflow-hidden bg-brand-navy">
@@ -248,6 +308,48 @@ export default async function HomePage() {
               </Reveal>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Arrival-based routing — cruise ship & Playa del Carmen day-trippers */}
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-2xl text-center">
+          <span className="text-brand-yellow text-sm font-bold uppercase tracking-wide">
+            Arriving to Cozumel
+          </span>
+          <h2 className="font-display mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            However you&apos;re getting here, we&apos;ve got you covered
+          </h2>
+        </div>
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <Link
+            href="/cruise-excursions"
+            className="group border-border-soft bg-surface flex flex-col gap-3 rounded-2xl border p-6 shadow-sm transition hover:shadow-xl hover:shadow-black/30"
+          >
+            <Anchor className="text-brand-yellow h-6 w-6" />
+            <h3 className="text-lg font-bold text-white">On a cruise ship?</h3>
+            <p className="text-sm text-white/60">
+              A short taxi ride from Puerta Maya and the International Pier. See which tours fit
+              your port day and how to book before you even dock.
+            </p>
+            <span className="text-brand-ocean mt-auto flex items-center gap-1 text-sm font-bold group-hover:text-white">
+              Cruise excursion guide <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
+          <Link
+            href="/playa-del-carmen"
+            className="group border-border-soft bg-surface flex flex-col gap-3 rounded-2xl border p-6 shadow-sm transition hover:shadow-xl hover:shadow-black/30"
+          >
+            <Waves className="text-brand-yellow h-6 w-6" />
+            <h3 className="text-lg font-bold text-white">Staying in Playa del Carmen?</h3>
+            <p className="text-sm text-white/60">
+              Hop on the ferry to Cozumel and have your tour already booked and confirmed when
+              you land. Here&apos;s exactly how to plan the day.
+            </p>
+            <span className="text-brand-ocean mt-auto flex items-center gap-1 text-sm font-bold group-hover:text-white">
+              Day-trip guide <ArrowRight className="h-4 w-4" />
+            </span>
+          </Link>
         </div>
       </section>
 

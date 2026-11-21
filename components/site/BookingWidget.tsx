@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
-import { Minus, Plus, CalendarDays, ShieldCheck, Lock } from "lucide-react";
+import { Minus, Plus, CalendarDays, ShieldCheck, Lock, Star, BadgeCheck } from "lucide-react";
 import { formatMXN } from "@/lib/utils";
+import { BUSINESS } from "@/lib/business";
 import DatePickerCalendar from "./DatePickerCalendar";
 
 type Props = {
@@ -95,9 +96,19 @@ export default function BookingWidget({
       className="border-border-soft bg-surface flex scroll-mt-24 flex-col gap-4 rounded-2xl border p-6 shadow-lg lg:sticky lg:top-24"
     >
       <div>
-        <p className="text-brand-yellow text-2xl font-extrabold">{formatMXN(priceMXN)}</p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-brand-yellow text-2xl font-extrabold">{formatMXN(priceMXN)}</p>
+          <span className="flex items-center gap-1 text-xs font-semibold text-white/60">
+            <Star className="h-3.5 w-3.5 fill-brand-yellow text-brand-yellow" />
+            {BUSINESS.rating.value} · {BUSINESS.rating.count}+ reviews
+          </span>
+        </div>
         <p className="text-sm text-white/50">
           {priceType === "PER_PERSON" ? "per person" : "per private boat"}
+        </p>
+        <p className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-white/60">
+          <BadgeCheck className="text-brand-ocean h-4 w-4 shrink-0" />
+          Free cancellation up to 48h before — full refund
         </p>
       </div>
 

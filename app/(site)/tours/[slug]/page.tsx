@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { parseTour, CATEGORY_LABELS, buildTourFAQs } from "@/lib/tour-helpers";
+import { siteUrl } from "@/lib/business";
 import { getTourPhotos } from "@/lib/tour-gallery";
 import { formatDuration } from "@/lib/utils";
 import { stripeEnabled } from "@/lib/stripe";
@@ -24,9 +25,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const tour = await prisma.tour.findUnique({ where: { slug } });
   if (!tour) return {};
+  const images = tour.heroImage ? [tour.heroImage] : undefined;
   return {
     title: tour.name,
     description: tour.shortDescription,
+    alternates: { canonical: `/tours/${tour.slug}` },
+    openGraph: {
+      title: tour.name,
+      description: tour.shortDescription,
+      url: `/tours/${tour.slug}`,
+      images,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: tour.name,
+      description: tour.shortDescription,
+      images,
+    },
   };
 }
 
@@ -53,21 +68,42 @@ export default async function TourDetailPage({ params }: Props) {
     .sort((a, b) => Number(a.category !== parsed.category) - Number(b.category !== parsed.category))
     .slice(0, 3);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const url = siteUrl();
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: parsed.name,
     description: parsed.shortDescription,
-    image: parsed.heroImage ? `${siteUrl}${parsed.heroImage}` : undefined,
+    image: parsed.heroImage ? `${url}${parsed.heroImage}` : undefined,
     brand: { "@type": "Brand", name: "May-Be Tours Cozumel" },
     offers: {
       "@type": "Offer",
-      url: `${siteUrl}/tours/${parsed.slug}`,
+      url: `${url}/tours/${parsed.slug}`,
       priceCurrency: "MXN",
       price: parsed.priceMXN,
       availability: "https://schema.org/InStock",
     },
+  };
+
+  const faqs = buildTourFAQs(parsed);
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: url },
+      { "@type": "ListItem", position: 2, name: "Tours", item: `${url}/tours` },
+      { "@type": "ListItem", position: 3, name: parsed.name, item: `${url}/tours/${parsed.slug}` },
+    ],
   };
 
   return (
@@ -75,6 +111,14 @@ export default async function TourDetailPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
       <Link
         href="/tours"
