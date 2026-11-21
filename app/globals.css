@@ -7,6 +7,9 @@
 
   /* May-Be Tours brand palette, pulled from the logo/signage */
   --brand-red: #e42313;
+  /* Lighter tint of brand-red for small text on dark backgrounds — plain
+     brand-red fails WCAG contrast (~2:1) against the navy/surface theme. */
+  --brand-red-light: #fca5a5;
   --brand-yellow: #ffc20e;
   --brand-navy: #0b3c66;
   --brand-ocean: #0e90a6;
@@ -24,6 +27,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand-red: var(--brand-red);
+  --color-brand-red-light: var(--brand-red-light);
   --color-brand-yellow: var(--brand-yellow);
   --color-brand-navy: var(--brand-navy);
   --color-brand-ocean: var(--brand-ocean);

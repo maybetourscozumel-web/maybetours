@@ -174,7 +174,7 @@ export default function BookingWidget({
 
       {date && remaining !== null && (
         <p
-          className={`text-sm font-semibold ${notEnoughSpots ? "text-brand-red" : "text-brand-ocean"}`}
+          className={`text-sm font-semibold ${notEnoughSpots ? "text-brand-red-light" : "text-brand-ocean"}`}
         >
           {notEnoughSpots
             ? "Sorry, not enough spots left on this date."
@@ -227,7 +227,7 @@ export default function BookingWidget({
         <span className="text-xl font-extrabold text-white">{formatMXN(totalPrice)}</span>
       </div>
 
-      {error && <p className="text-brand-red text-sm font-semibold">{error}</p>}
+      {error && <p className="text-brand-red-light text-sm font-semibold">{error}</p>}
 
       {!stripeEnabled && (
         <p className="bg-brand-yellow/10 text-brand-yellow rounded-lg px-3 py-2 text-xs">

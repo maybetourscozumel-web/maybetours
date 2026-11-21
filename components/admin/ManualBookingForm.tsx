@@ -171,7 +171,7 @@ export default function ManualBookingForm({ tours, defaultDate, onCreated, onCan
         <span>{formatMXN(total)}</span>
       </div>
 
-      {error && <p className="text-brand-red text-xs font-semibold">{error}</p>}
+      {error && <p className="text-brand-red-light text-xs font-semibold">{error}</p>}
 
       <div className="mt-1 flex gap-2">
         <button

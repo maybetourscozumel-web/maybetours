@@ -97,7 +97,7 @@ export default function MarineLifeGuide() {
               <span
                 className={cn(
                   "whitespace-nowrap text-sm font-bold lg:whitespace-normal",
-                  i === active ? "text-brand-red" : "text-white"
+                  i === active ? "text-brand-red-light" : "text-white"
                 )}
               >
                 {c.name}

@@ -7,6 +7,8 @@ import { BUSINESS, siteUrl } from "@/lib/business";
 // AI assistants (ChatGPT, Perplexity, Gemini, Claude, etc.) that answer
 // questions like "best snorkeling tour in Cozumel" — giving them accurate,
 // structured facts to cite directly instead of guessing from stale listings.
+// Follows the llmstxt.org convention: H1, a blockquote summary, then H2
+// sections of markdown links with short descriptions.
 export async function GET() {
   const url = siteUrl();
   const tours = await prisma.tour.findMany({ where: { active: true }, orderBy: { sortOrder: "asc" } });
@@ -15,38 +17,38 @@ export async function GET() {
   const lines: string[] = [];
   lines.push(`# ${BUSINESS.name}`);
   lines.push("");
-  lines.push(BUSINESS.description);
+  lines.push(`> ${BUSINESS.description}`);
   lines.push("");
-  lines.push("## Facts");
-  lines.push(`- Location: ${BUSINESS.addressFull}`);
-  lines.push(`- Phone / WhatsApp: ${BUSINESS.whatsappDisplay}`);
-  lines.push(`- Email: ${BUSINESS.email}`);
-  lines.push(`- Hours: ${BUSINESS.openingHoursDisplay}`);
-  lines.push(`- Rating: ${BUSINESS.rating.value}/5 from ${BUSINESS.rating.count}+ reviews (Tripadvisor)`);
   lines.push(
-    "- Reachable by a short taxi ride (about 5-15 minutes) from the Cozumel cruise piers (Puerta Maya, International Pier)."
+    `Based at ${BUSINESS.addressFull}. ${BUSINESS.openingHoursDisplay}. Rated ${BUSINESS.rating.value}/5 from ${BUSINESS.rating.count}+ reviews on Tripadvisor. Reachable by a short taxi ride (about 5-15 minutes) from the Cozumel cruise piers (Puerta Maya, International Pier), or via a ~45 minute passenger ferry from Playa del Carmen.`
   );
-  lines.push(
-    "- Reachable from Playa del Carmen via a ~45 minute passenger ferry (Ultramar, Winjet) to Cozumel, then a short taxi to the marina."
-  );
-  lines.push(`- Book online: ${url}/tours`);
-  lines.push(`- Cruise excursion guide: ${url}/cruise-excursions`);
-  lines.push(`- Playa del Carmen day-trip guide: ${url}/playa-del-carmen`);
   lines.push("");
+
   lines.push("## Tours");
   for (const t of parsedTours) {
-    lines.push(`### ${t.name}`);
-    lines.push(`- URL: ${url}/tours/${t.slug}`);
-    lines.push(`- Category: ${CATEGORY_LABELS[t.category] ?? t.category}`);
-    lines.push(`- Duration: ${formatDuration(t.durationMinutes)}`);
-    lines.push(`- Group size: up to ${t.maxGroupSize} people${t.isPrivate ? " (private charter)" : ""}`);
-    lines.push(`- Price: ${formatMXN(t.priceMXN)} ${t.priceType === "PER_PERSON" ? "per person" : "per boat"}`);
-    lines.push(`- Summary: ${t.shortDescription}`);
-    if (t.highlights.length > 0) lines.push(`- Highlights: ${t.highlights.join(", ")}`);
-    lines.push("");
+    const price = `${formatMXN(t.priceMXN)} ${t.priceType === "PER_PERSON" ? "per person" : "per boat"}`;
+    lines.push(
+      `- [${t.name}](${url}/tours/${t.slug}): ${t.shortDescription} ${CATEGORY_LABELS[t.category] ?? t.category}, ${formatDuration(t.durationMinutes)}, up to ${t.maxGroupSize} people, ${price}.`
+    );
   }
+  lines.push("");
 
-  return new Response(lines.join("\n"), {
+  lines.push("## Guides");
+  lines.push(`- [All tours](${url}/tours): Browse the full catalog with live availability.`);
+  lines.push(
+    `- [Cruise excursion guide](${url}/cruise-excursions): How cruise ship passengers get here and which tours fit a port day.`
+  );
+  lines.push(
+    `- [Playa del Carmen day-trip guide](${url}/playa-del-carmen): Ferry crossing info and which tours fit a day trip.`
+  );
+  lines.push("");
+
+  lines.push("## Contact");
+  lines.push(`- [WhatsApp](https://wa.me/${BUSINESS.whatsappNumber}): ${BUSINESS.whatsappDisplay}`);
+  lines.push(`- Phone: ${BUSINESS.telephone}`);
+  lines.push(`- Email: ${BUSINESS.email}`);
+
+  return new Response(lines.join("\n") + "\n", {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 }
