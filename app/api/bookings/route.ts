@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getStripe } from "@/lib/stripe";
-import { getTourAvailability, computeTotalPrice, toDateOnly, PENDING_HOLD_MINUTES } from "@/lib/availability";
+import {
+  getTourAvailability,
+  computeTotalPrice,
+  toDateOnly,
+  todayInBusinessTimezone,
+  PENDING_HOLD_MINUTES,
+} from "@/lib/availability";
 import { createBookingSchema } from "@/lib/validation";
 import { sendBookingConfirmationEmail, sendAdminBookingAlert } from "@/lib/email";
 import { formatDate } from "@/lib/utils";
@@ -32,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   const bookingDate = toDateOnly(date);
-  if (bookingDate.getTime() < toDateOnly(new Date()).getTime()) {
+  if (bookingDate.getTime() < todayInBusinessTimezone().getTime()) {
     return NextResponse.json({ error: "Please choose a date in the future." }, { status: 400 });
   }
 

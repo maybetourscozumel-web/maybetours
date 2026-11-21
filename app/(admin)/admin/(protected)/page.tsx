@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { toDateOnly } from "@/lib/availability";
+import { todayInBusinessTimezone } from "@/lib/availability";
 import { formatMXN, cn } from "@/lib/utils";
 import Link from "next/link";
 import { CalendarCheck, Users, CalendarRange, Wallet, UserPlus, ArrowRight } from "lucide-react";
@@ -13,7 +13,7 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 export default async function AdminOverviewPage() {
-  const today = toDateOnly(new Date());
+  const today = todayInBusinessTimezone();
   const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const [todayBookings, upcomingBookings, monthRevenue, totalCustomers] = await Promise.all([
@@ -61,6 +61,7 @@ export default async function AdminOverviewPage() {
           month: "long",
           day: "numeric",
           year: "numeric",
+          timeZone: "America/Cancun",
         }).format(new Date())}
       </p>
 

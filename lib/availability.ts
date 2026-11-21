@@ -8,6 +8,18 @@ export function toDateOnly(d: Date | string): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
+// Cozumel/Quintana Roo uses a fixed UTC-5 offset year-round (no DST), so the
+// business's "today" is computed from that offset rather than the server's
+// UTC day — otherwise every evening after 7pm local, the server's UTC date
+// has already rolled to the next day and same-day bookings look "in the past".
+const BUSINESS_UTC_OFFSET_HOURS = -5;
+
+/** Today's calendar date in the business's local timezone, as a UTC-midnight Date. */
+export function todayInBusinessTimezone(): Date {
+  const shifted = new Date(Date.now() + BUSINESS_UTC_OFFSET_HOURS * 60 * 60 * 1000);
+  return new Date(Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate()));
+}
+
 export type AvailabilityResult = {
   remaining: number;
   soldOut: boolean;
